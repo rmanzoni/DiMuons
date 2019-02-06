@@ -37,7 +37,11 @@ Charmonium_2017 = [
     Charmonium_2017F,
 ]
 
+# HLT_Mu7p5_Track2 (3.5, 7)
 
 for isample in DoubleMuonLowMass_2017 + Charmonium_2017:
     isample.json = json
+    isample.triggers  = ['HLT_Mu7p5_Track2_Jpsi_v%d'   %i for i in range(15)]
+    isample.triggers += ['HLT_Mu7p5_Track3p5_Jpsi_v%d' %i for i in range(15)]
+    isample.triggers += ['HLT_Mu7p5_Track7_Jpsi_v%d'   %i for i in range(15)]
 

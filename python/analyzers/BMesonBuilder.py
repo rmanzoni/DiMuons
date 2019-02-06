@@ -1,6 +1,7 @@
 import ROOT
 
 from itertools import product
+from copy import deepcopy as dc
 
 from PhysicsTools.Heppy.analyzers.core.Analyzer import Analyzer
 from PhysicsTools.Heppy.analyzers.core.AutoHandle import AutoHandle
@@ -50,12 +51,15 @@ class BMesonBuilder(Analyzer):
         losttracks = map(PhysicsObject, self.handles['losttracks'].product())
 
         # merge the track collections
-        event.alltracks = sorted([tt for tt in allpf + losttracks if tt.charge() != 0 and abs(tt.pdgId()) not in (11,13)], key = lambda x : x.pt(), reverse = True)
+        event.alltracks = sorted([tt for tt in allpf + losttracks if tt.charge() != 0 and tt.pt()>getattr(self.cfg_ana, 'min_pt', 0.8) and abs(tt.pdgId()) not in (11,13)], key = lambda x : x.pt(), reverse = True)
 
         # start building the candidates
         cands = []
         
         resonances = getattr(event, self.instance_label, 'resonances')
+
+#         import pdb ;  pdb.set_trace()
+#         for obj in info.objects: print obj.pt(), obj.eta(), obj.phi(), obj.filter('hltMu7p5Track7JpsiTrackMassFiltered'), obj.triggerObjectTypes()[0]
 
         if getattr(self.cfg_ana, 'jpsi_window', False):
             resonances = [ires for ires in resonances if abs(ires.mass()-3.0969)<1]
@@ -64,7 +68,12 @@ class BMesonBuilder(Analyzer):
             self.counters.counter('BMesonBuilder').inc('>0 mu mu in jpsi window')
 
         # add a track
-        for dilep, tk in product(resonances, event.alltracks):
+        for dilep, itk in product(resonances, event.alltracks):
+            
+#             import pdb ; pdb.set_trace()
+            
+            tk = PhysicsObject(ROOT.pat.PackedCandidate(itk.physObj))
+            
             # pt and sanity checks on the track
             if not tk.bestTrack(): continue
             if tk.pt()<0.8: continue
@@ -73,11 +82,12 @@ class BMesonBuilder(Analyzer):
             # try to fit a vertex only if the track's close to the di-ele cand
             if max([abs(dilep.leg1.vz() - tk.vz()), abs(dilep.leg2.vz() - tk.vz())]) > 1.5: continue
             # remove double countings 
-            if deltaR(tk, dilep.leg1)<0.01 or deltaR(tk, dilep.leg2)<0.01: continue
+            if deltaR(tk, dilep.leg1)<0.005 or deltaR(tk, dilep.leg2)<0.005: continue
 
             # kaon mass
             tk.setMass(0.493677)
             tk.setPdgId(321 * tk.charge())
+            tk.setCharge(tk.charge())   
                         
             # clear the vectors
             self.tks.clear()
@@ -91,7 +101,7 @@ class BMesonBuilder(Analyzer):
             vertex = self.vtxfit.Fit(self.tks)
             # check that the vertex is good
             if not vertex.isValid(): continue
-            cands.append(BKLL(dilep.leg1, dilep.leg2, tk, vertex, event.beamspot))
+            cands.append(BKLL(dilep.leg1, dilep.leg2, tk, vertex, event.beamspot, mass0=0.105658, mass1=0.105658))
 
         if len(cands)==0: return False
 
@@ -104,7 +114,7 @@ class BMesonBuilder(Analyzer):
             self.counters.counter('BMesonBuilder').inc('>0 cands in B window')
 
         cands.sort(key=lambda x: (x.vtx().normalisedChiSquared()))
+#         cands.sort(key=lambda x: abs(x.mass()-5.279))
         event.theb = cands[0]        
         event.cands = cands        
-
 

@@ -41,7 +41,8 @@ class ResonanceBuilder(Analyzer):
         super(ResonanceBuilder, self).beginLoop(setup)
         # vertexing stuff
         self.vtxfit = VertexFitter()
-        self.tks = ROOT.std.vector('reco::TrackRef')()
+#         self.tks = ROOT.std.vector('reco::TrackRef')()
+        self.tks = ROOT.std.vector('reco::Track')()
         # event counter
         self.counters.addCounter('ResonanceBuilder')
         count = self.counters.counter('ResonanceBuilder')
@@ -69,7 +70,8 @@ class ResonanceBuilder(Analyzer):
         for leg1, leg2 in itertools.product(legs1, legs2):
             if leg1.physObj == leg2.physObj:
                  continue
-            ires = Resonance(leg1, leg2, self.cfg_ana.pdgid, 3)
+            ires = Resonance(leg1, leg2, self.cfg_ana.pdgid, 3, mass1=0.1057, mass2=0.1057)
+#             ires = Resonance(leg1, leg2, self.cfg_ana.pdgid, 3)
             resonances.append( ires )
             
         if len(resonances)==0:
@@ -84,11 +86,13 @@ class ResonanceBuilder(Analyzer):
             return False
 
         self.counters.counter('ResonanceBuilder').inc('>0 filtered dimuons')
-                
+                        
         for ires in resonances:
             self.tks.clear()
-            self.tks.push_back(ires.leg1.track())
-            self.tks.push_back(ires.leg2.track())
+#             self.tks.push_back(ires.leg1.track())
+#             self.tks.push_back(ires.leg2.track())
+            self.tks.push_back(ires.leg1.bestTrack())
+            self.tks.push_back(ires.leg2.bestTrack())
             ires.vertex = self.vtxfit.Fit(self.tks)
 
         # make vertex objects 
@@ -136,6 +140,7 @@ class ResonanceBuilder(Analyzer):
         # sorting according to distance to nominal mass
         nominal_mass = mass[self.cfg_ana.pdgid]
         resonances.sort(key=lambda x: (abs(x.charge()), x.vertex.normalisedChiSquared()))
+#         resonances.sort(key=lambda x: (abs(x.charge()), abs(x.mass()-3.0969)))
 
         setattr(event, self.instance_label, resonances)
         

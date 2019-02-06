@@ -1,4 +1,6 @@
+import ROOT
 from PhysicsTools.Heppy.physicsobjects.Particle import Particle
+from PhysicsTools.Heppy.physicsobjects.PhysicsObject import PhysicsObject
 
 class Resonance(Particle):
     '''Resonance decaying into 2 particles.
@@ -8,15 +10,24 @@ class Resonance(Particle):
     transparently. 
     '''
 
-    def __init__(self, leg1, leg2, pdgid, status=3): 
+    def __init__(self, leg1, leg2, pdgid, status=3, sort_by_pt=False, mass1=-1, mass2=-1): 
         '''
         Parameters (stored as attributes):
         leg1,2 : first and second leg.
         pdgid  : pdg code of the resonance
         status : status code of the resonance
         '''
-        self.leg1 = leg1 
-        self.leg2 = leg2 
+        if isinstance(leg1.physObj, ROOT.pat.PackedCandidate): leg1 = PhysicsObject(ROOT.pat.PackedCandidate(leg1.physObj))
+        if isinstance(leg2.physObj, ROOT.pat.PackedCandidate): leg2 = PhysicsObject(ROOT.pat.PackedCandidate(leg2.physObj))
+
+        if sort_by_pt:
+            self.leg1 = leg1 if leg1.pt() >= leg2.pt() else leg2 
+            self.leg2 = leg2 if leg1.pt() >= leg2.pt() else leg1
+        else:
+            self.leg1 = leg1 
+            self.leg2 = leg2 
+        if mass1>0: self.leg1.setMass(mass1)
+        if mass2>0: self.leg2.setMass(mass2)
         self._p4 = leg1.p4() + leg2.p4()
         self._charge = leg1.charge() + leg2.charge()
         self._pdgid = pdgid

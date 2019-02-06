@@ -18,9 +18,15 @@ class BKLL(object):
     observables, e.g. angular variables
     '''
 
-    def __init__(self, l0, l1, k, vtx=None, beamspot=None):
-        self.l0_    = l0 if l0.pt() >= l1.pt() else l1  # leading pt lepton
-        self.l1_    = l1 if l0.pt() >= l1.pt() else l0  # trailing pt displaced lepton
+    def __init__(self, l0, l1, k, vtx=None, beamspot=None, sort_by_pt=False, mass0=-1, mass1=-1):
+        if sort_by_pt:
+            self.l0_    = l0 if l0.pt() >= l1.pt() else l1  # leading pt lepton
+            self.l1_    = l1 if l0.pt() >= l1.pt() else l0  # trailing pt displaced lepton
+        else:
+            self.l0_    = l0
+            self.l1_    = l1
+        if mass0>0: self.l0_.setMass(mass0)
+        if mass1>0: self.l1_.setMass(mass1)
         self.k_     = k    # kaon
         self.vtx_   = vtx  # vertex
         self.bs_    = beamspot 
@@ -82,7 +88,7 @@ class BKLL(object):
         return self.p4().energy()
 
     def charge(self):
-        return self.k().charge() + self.l0().charge() + self.l1().charge()
+        return (self.k().charge() + self.l0().charge() + self.l1().charge())
 
     def pdgId(self):
         return 521*self.charge()

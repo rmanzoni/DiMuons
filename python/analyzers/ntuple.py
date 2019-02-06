@@ -12,11 +12,13 @@ def bookEvent(tree):
     var(tree, 'run')
     var(tree, 'lumi')
     var(tree, 'event')
+    var(tree, 'nvtx')
  
 def fillEvent(tree, event):
     fill(tree, 'run', event.run)
     fill(tree, 'lumi', event.lumi)
     fill(tree, 'event', event.eventId)
+    fill(tree, 'nvtx', len(event.pvs))
 
 
 # simple particle
@@ -70,6 +72,7 @@ def bookMuon(tree, pName):
     var(tree, '{pName}_id_s'       .format(pName=pName))
     var(tree, '{pName}_id_l'       .format(pName=pName))
     var(tree, '{pName}_id_m'       .format(pName=pName))
+    var(tree, '{pName}_id_mm'      .format(pName=pName))
     var(tree, '{pName}_id_t'       .format(pName=pName))
     var(tree, '{pName}_id_tnv'     .format(pName=pName))
     var(tree, '{pName}_id_hpt'     .format(pName=pName))
@@ -89,6 +92,7 @@ def fillMuon(tree, pName, muon):
     fill(tree, '{pName}_id_s'       .format(pName=pName), muon.isSoftMuon(muon.associatedVertex)             )
     fill(tree, '{pName}_id_l'       .format(pName=pName), muon.muonID('POG_ID_Loose')                        )
     fill(tree, '{pName}_id_m'       .format(pName=pName), muon.muonID('POG_ID_Medium')                       )
+    fill(tree, '{pName}_id_mm'      .format(pName=pName), muon.martinaMedium                                 )
     fill(tree, '{pName}_id_t'       .format(pName=pName), muon.muonID('POG_ID_Tight')                        )
     fill(tree, '{pName}_id_tnv'     .format(pName=pName), muon.muonID('POG_ID_TightNoVtx')                   )
     fill(tree, '{pName}_id_hpt'     .format(pName=pName), muon.muonID('POG_ID_HighPt')                       )

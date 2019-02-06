@@ -4,7 +4,13 @@ from PhysicsTools.Heppy.physicsobjects.Muon import Muon
 
 
 class MuonAnalyzer(Analyzer):
-    '''Just a simple jet analyzer, to be used in tutorials.'''
+
+    def beginLoop(self, setup):
+        super(MuonAnalyzer, self).beginLoop(setup)
+        self.counters.addCounter('MuonAnalyzer')
+        count = self.counters.counter('MuonAnalyzer')
+        count.register('all events')
+        count.register('>0 selected muons')
 
     def declareHandles(self):
         super(MuonAnalyzer, self).declareHandles()
@@ -13,11 +19,24 @@ class MuonAnalyzer(Analyzer):
 
     def process(self, event):
         super(MuonAnalyzer, self).readCollections(event.input)
+
+        self.counters.counter('MuonAnalyzer').inc('all events')
+
         event.muons = map(Muon, self.handles['muons'].product())
+        
+        if getattr(self.cfg_ana, 'filter', False):
+            event.muons = [mu for mu in event.muons if self.cfg_ana.filter(mu)]
+
+        if len(event.muons)==0:
+            return False
+            
+        self.counters.counter('MuonAnalyzer').inc('>0 selected muons')
+        
         event.pvs = self.handles['pvs'].product()
         for muon in event.muons:
             muon.isoot = self.isOotMuon(muon)
             muon.associatedVertex = event.pvs[0]
+            muon.martinaMedium = self.martinaMedium(muon)
         
     def isOotMuon(self, muon):
         '''
@@ -64,3 +83,14 @@ class MuonAnalyzer(Analyzer):
                 return True
         
         return False
+
+    def martinaMedium(self, mu):
+        isGoodGlobal = mu.isGlobalMuon()                           and \
+                       mu.combinedQuality().chi2LocalPosition < 12 and \
+                       mu.combinedQuality().trkKink < 20
+        
+        isMartinaMedium = mu.isLooseMuon() and \
+                          mu.segmentCompatibility() > (0.303 if isGoodGlobal else 0.451)
+        
+        return isMartinaMedium
+

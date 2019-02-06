@@ -180,7 +180,7 @@ config = cfg.Config( components = selectedComponents,
 print config
 
 '''
-heppy_batch.py -o production_charmonium bjpsimmk_data_cfg.py -B -b 'run_condor_simple.sh -t 1200 ./batchScript.sh'
+heppy_batch.py -o production_charmonium_v2 bjpsimmk_data_cfg.py -B -b 'run_condor_simple.sh -t 1200 ./batchScript.sh'
 '''
 
 # if __name__ == '__main__':

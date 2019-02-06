@@ -48,6 +48,7 @@ class ResonanceBuilder(Analyzer):
         count = self.counters.counter('ResonanceBuilder')
         count.register('all events')
         count.register('>0 dimuon')
+        count.register('>0 dimuon w/ vtx')
         count.register('>0 filtered dimuons')
 
     def declareHandles(self):
@@ -86,6 +87,8 @@ class ResonanceBuilder(Analyzer):
             return False
 
         self.counters.counter('ResonanceBuilder').inc('>0 filtered dimuons')
+        
+        tmp_resonances = []
                         
         for ires in resonances:
             self.tks.clear()
@@ -96,6 +99,14 @@ class ResonanceBuilder(Analyzer):
             self.tks.push_back(ires.leg1.bestTrack())
             self.tks.push_back(ires.leg2.bestTrack())
             ires.vertex = self.vtxfit.Fit(self.tks)
+            tmp_resonances.append(ires)
+        
+        resonances = tmp_resonances
+
+        if len(resonances)==0:
+            return False
+
+        self.counters.counter('ResonanceBuilder').inc('>0 dimuon w/ vtx')
 
         # make vertex objects 
         pvs            = self.handles['pvs'].product(); event.pv = pvs[0]
@@ -103,7 +114,7 @@ class ResonanceBuilder(Analyzer):
 
         # save vertex and displacement quantities
         for ires in resonances:
-            
+            if not hasattr(ires, 'vertex'): continue
             if not ires.vertex.isValid(): continue
 
             ires.disp3DFromBS     = ROOT.VertexDistance3D().distance(ires.vertex.vertexState(), event.pv)

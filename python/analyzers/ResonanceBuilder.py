@@ -89,6 +89,8 @@ class ResonanceBuilder(Analyzer):
                         
         for ires in resonances:
             self.tks.clear()
+            if not ires.leg1.bestTrack(): continue
+            if not ires.leg2.bestTrack(): continue
 #             self.tks.push_back(ires.leg1.track())
 #             self.tks.push_back(ires.leg2.track())
             self.tks.push_back(ires.leg1.bestTrack())
